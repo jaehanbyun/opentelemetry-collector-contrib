@@ -63,12 +63,64 @@ func Transform(pod *corev1.Pod) *corev1.Pod {
 			LastTerminationState: cs.LastTerminationState,
 		})
 	}
+
+	for _, cs := range pod.Status.InitContainerStatuses {
+		if cs.ContainerID == "" {
+			continue
+		}
+
+		newPod.Status.InitContainerStatuses = append(newPod.Status.InitContainerStatuses, corev1.ContainerStatus{
+			Name:                 cs.Name,
+			Image:                cs.Image,
+			ContainerID:          cs.ContainerID,
+			RestartCount:         cs.RestartCount,
+			Ready:                cs.Ready,
+			State:                cs.State,
+			LastTerminationState: cs.LastTerminationState,
+		})
+	}
+	for _, cs := range pod.Status.EphemeralContainerStatuses {
+		if cs.ContainerID == "" {
+			continue
+		}
+		newPod.Status.EphemeralContainerStatuses = append(newPod.Status.EphemeralContainerStatuses, corev1.ContainerStatus{
+			Name:                 cs.Name,
+			Image:                cs.Image,
+			ContainerID:          cs.ContainerID,
+			RestartCount:         cs.RestartCount,
+			Ready:                cs.Ready,
+			State:                cs.State,
+			LastTerminationState: cs.LastTerminationState,
+		})
+	}
+
 	for _, c := range pod.Spec.Containers {
 		newPod.Spec.Containers = append(newPod.Spec.Containers, corev1.Container{
 			Name: c.Name,
 			Resources: corev1.ResourceRequirements{
 				Requests: c.Resources.Requests,
 				Limits:   c.Resources.Limits,
+			},
+		})
+	}
+
+	for _, c := range pod.Spec.InitContainers {
+		newPod.Spec.InitContainers = append(newPod.Spec.InitContainers, corev1.Container{
+			Name: c.Name,
+			Resources: corev1.ResourceRequirements{
+				Requests: c.Resources.Requests,
+				Limits:   c.Resources.Limits,
+			},
+		})
+	}
+	for _, c := range pod.Spec.EphemeralContainers {
+		newPod.Spec.EphemeralContainers = append(newPod.Spec.EphemeralContainers, corev1.EphemeralContainer{
+			EphemeralContainerCommon: corev1.EphemeralContainerCommon{
+				Name: c.Name,
+				Resources: corev1.ResourceRequirements{
+					Requests: c.Resources.Requests,
+					Limits:   c.Resources.Limits,
+				},
 			},
 		})
 	}
@@ -88,6 +140,14 @@ func RecordMetrics(logger *zap.Logger, mb *metadata.MetricsBuilder, pod *corev1.
 
 	for _, c := range pod.Spec.Containers {
 		container.RecordSpecMetrics(logger, mb, c, pod, ts)
+	}
+
+	for _, c := range pod.Spec.InitContainers {
+		container.RecordSpecMetrics(logger, mb, c, pod, ts)
+	}
+
+	for _, c := range pod.Spec.EphemeralContainers {
+		container.RecordSpecMetrics(logger, mb, toContainerFromEphemeral(c), pod, ts)
 	}
 }
 
@@ -277,5 +337,26 @@ func getPodContainerProperties(pod *corev1.Pod, logger *zap.Logger) map[experime
 		md := container.GetMetadata(pod, cs, logger)
 		km[md.ResourceID] = md
 	}
+
+	for _, cs := range pod.Status.InitContainerStatuses {
+		md := container.GetMetadata(pod, cs, logger)
+		km[md.ResourceID] = md
+	}
+
+	for _, cs := range pod.Status.EphemeralContainerStatuses {
+		md := container.GetMetadata(pod, cs, logger)
+		km[md.ResourceID] = md
+	}
+
 	return km
+}
+
+func toContainerFromEphemeral(c corev1.EphemeralContainer) corev1.Container {
+	return corev1.Container{
+		Name: c.Name,
+		Resources: corev1.ResourceRequirements{
+			Requests: c.Resources.Requests,
+			Limits:   c.Resources.Limits,
+		},
+	}
 }

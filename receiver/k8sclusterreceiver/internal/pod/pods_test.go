@@ -419,6 +419,40 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			InitContainers: []corev1.Container{
+				{
+					Name:  "my-init",
+					Image: "busybox:latest",
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("500m"),
+							corev1.ResourceMemory: resource.MustParse("1Gi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("1"),
+							corev1.ResourceMemory: resource.MustParse("2Gi"),
+						},
+					},
+				},
+			},
+			EphemeralContainers: []corev1.EphemeralContainer{
+				{
+					EphemeralContainerCommon: corev1.EphemeralContainerCommon{
+						Name:  "my-ephem",
+						Image: "alpine:latest",
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("500m"),
+								corev1.ResourceMemory: resource.MustParse("1Gi"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("1"),
+								corev1.ResourceMemory: resource.MustParse("2Gi"),
+							},
+						},
+					},
+				},
+			},
 		},
 		Status: corev1.PodStatus{
 			Phase:     corev1.PodRunning,
@@ -439,6 +473,22 @@ func TestTransform(t *testing.T) {
 					RestartCount: 2,
 					Ready:        true,
 					State:        containerState,
+				},
+			},
+			InitContainerStatuses: []corev1.ContainerStatus{
+				{
+					Name:        "my-init",
+					Image:       "busybox:latest",
+					ContainerID: "init12345",
+					State:       containerState,
+				},
+			},
+			EphemeralContainerStatuses: []corev1.ContainerStatus{
+				{
+					Name:        "my-ephem",
+					Image:       "alpine:latest",
+					ContainerID: "ephem12345",
+					State:       containerState,
 				},
 			},
 		},
@@ -469,6 +519,38 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			InitContainers: []corev1.Container{
+				{
+					Name: "my-init",
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("500m"),
+							corev1.ResourceMemory: resource.MustParse("1Gi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("1"),
+							corev1.ResourceMemory: resource.MustParse("2Gi"),
+						},
+					},
+				},
+			},
+			EphemeralContainers: []corev1.EphemeralContainer{
+				{
+					EphemeralContainerCommon: corev1.EphemeralContainerCommon{
+						Name: "my-ephem",
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("500m"),
+								corev1.ResourceMemory: resource.MustParse("1Gi"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("1"),
+								corev1.ResourceMemory: resource.MustParse("2Gi"),
+							},
+						},
+					},
+				},
+			},
 		},
 		Status: corev1.PodStatus{
 			Phase:  corev1.PodRunning,
@@ -481,6 +563,22 @@ func TestTransform(t *testing.T) {
 					RestartCount: 2,
 					Ready:        true,
 					State:        containerState,
+				},
+			},
+			InitContainerStatuses: []corev1.ContainerStatus{
+				{
+					Name:        "my-init",
+					Image:       "busybox:latest",
+					ContainerID: "init12345",
+					State:       containerState,
+				},
+			},
+			EphemeralContainerStatuses: []corev1.ContainerStatus{
+				{
+					Name:        "my-ephem",
+					Image:       "alpine:latest",
+					ContainerID: "ephem12345",
+					State:       containerState,
 				},
 			},
 		},
